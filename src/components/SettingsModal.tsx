@@ -11,7 +11,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, onSaved }
   const api = getElectronAPI();
   const [hasKey, setHasKey] = useState(false);
   const [keyInput, setKeyInput] = useState('');
-  const [model, setModel] = useState('gpt-4.1-mini');
+  const [model, setModel] = useState('gpt-4o-mini');
   const [status, setStatus] = useState<{ kind: 'success' | 'error' | 'info'; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -73,7 +73,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, onSaved }
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <KeyRound size={18} color="#818cf8" />
-            <h3 style={{ fontSize: 15, fontWeight: 700 }}>AI Settings (ChatGPT / OpenAI)</h3>
+            <h3 style={{ fontSize: 15, fontWeight: 700 }}>AI Settings</h3>
           </div>
           <button className="btn-icon" onClick={onClose}>
             <X size={16} />
@@ -82,25 +82,29 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, onSaved }
 
         <div className="modal-body">
           <div>
-            <div className="section-label" style={{ marginBottom: 6 }}>OpenAI API key</div>
+            <div className="section-label" style={{ marginBottom: 6 }}>OpenAI API Key</div>
             <input
               type="password"
-              placeholder={hasKey ? '•••••••• (saved — type to replace)' : 'sk-...'}
+              placeholder={hasKey ? '•••••••• (saved — type to replace)' : 'Enter OpenAI API Key (sk-...)'}
               value={keyInput}
               onChange={(e) => setKeyInput(e.target.value)}
               autoComplete="off"
             />
             <div className="lib-hint" style={{ marginTop: 6 }}>
-              Create a key at platform.openai.com → API keys. It is stored encrypted on this computer and only used by
-              the app to plan edits.
+              Stored safely on your computer and used for smart auto-editing.
             </div>
           </div>
 
           <div>
-            <div className="section-label" style={{ marginBottom: 6 }}>Model</div>
-            <input type="text" value={model} onChange={(e) => setModel(e.target.value)} />
+            <div className="section-label" style={{ marginBottom: 6 }}>OpenAI Model</div>
+            <input 
+              type="text" 
+              value={model} 
+              onChange={(e) => setModel(e.target.value)} 
+              placeholder="gpt-4o or gpt-4o-mini"
+            />
             <div className="lib-hint" style={{ marginTop: 6 }}>
-              Any chat model that supports JSON schema output, e.g. gpt-4.1-mini (cheap and fast) or gpt-4.1.
+              Preferred model for auto-generating timeline cuts and style plans.
             </div>
           </div>
 

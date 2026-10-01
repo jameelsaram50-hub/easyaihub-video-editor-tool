@@ -1,6 +1,6 @@
 import { ColorFilterPreset, MotionType, TransitionType } from '../types/project';
 
-/** A job exported by the Script Video Creator pipeline (see electron/pipeline-import.js). */
+/** A job exported by the Easy AI Hub pipeline (see electron/pipeline-import.js). */
 export interface PipelineScene {
   index: number;
   number: number;

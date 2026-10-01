@@ -50,9 +50,9 @@ A fully fledged, professional-grade desktop video editor powered by **[Remotion]
 
 ## 🤖 AI Auto Edit (one-click videos from the pipeline)
 
-**AI Auto Edit** (header button) turns a finished *Script Video Creator* pipeline job into a fully edited timeline:
+**AI Auto Edit** (header button) turns a finished *Easy AI Hub* pipeline job into a fully edited timeline:
 
-1. Pick a job — jobs are read from `%APPDATA%\script-video-creator\jobs\<job_id>` (`final_table.json`, `audio.mp3`, `subtitles.srt`, `images/`), or browse to any job folder.
+1. Pick a job — jobs are read from `%APPDATA%\easy-ai-hub\jobs\<job_id>` (or legacy folder), (`final_table.json`, `audio.mp3`, `subtitles.srt`, `images/`), or browse to any job folder.
 2. Pick a video style — Simple, Documentary, Cinematic, Dynamic, Shorts, Mystery, Retro VHS, Kids.
 3. Optionally let ChatGPT edit: it reads the script and picks per-scene camera motion, transition, color grade, sound effect, highlight words and short on-screen text. Add the OpenAI API key under ⚙ Settings (stored encrypted with Windows secure storage, only used in the main process). Without a key the style rules produce the edit.
 

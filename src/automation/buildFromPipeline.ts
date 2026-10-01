@@ -2,6 +2,7 @@ import { CompositionSettings, OverlayEffects, TimelineClip } from '../types/proj
 import { getTransition } from '../templates/transitions';
 import { getSfx, sfxSrc } from '../templates/sfx';
 import { getTitleTemplate } from '../templates/titles';
+import { getCaptionTemplate } from '../templates/captions';
 import { VideoStyle } from '../templates/styles';
 import { AiEditPlan, ASPECT_DIMENSIONS, AspectRatio, PipelineJobData } from './types';
 import { sanitizePlan } from './aiPlan';
@@ -244,6 +245,14 @@ export function buildProjectFromPipeline(job: PipelineJobData, options: BuildOpt
     });
   }
 
+  // Center-screen caption styles (TikTok box, single word) would sit on top of
+  // centered titles/callouts, so those move to the upper part of the frame
+  const captionsCentered = captionsEnabled && getCaptionTemplate(plan.caption_template).position === 'center';
+  const placeText = (props: Partial<TimelineClip>): Partial<TimelineClip> => {
+    if (!captionsCentered || Math.abs(props.y ?? 0) > height * 0.2) return props;
+    return { ...props, y: -Math.round(height * 0.3) };
+  };
+
   // ---- 5. Intro title ----
   let titleEnd = 0;
   // Pipeline job titles can be raw step output, so only a title typed by the
@@ -258,7 +267,7 @@ export function buildProjectFromPipeline(job: PipelineJobData, options: BuildOpt
       type: 'text',
       role: 'title',
       textTemplate: tpl?.id,
-      ...(tpl ? tpl.apply(width, height) : {}),
+      ...(tpl ? placeText(tpl.apply(width, height)) : {}),
       content: titleText,
       startFrame: 0,
       durationInFrames: duration,
@@ -285,7 +294,7 @@ export function buildProjectFromPipeline(job: PipelineJobData, options: BuildOpt
       type: 'text',
       role: 'overlay',
       textTemplate: tpl?.id,
-      ...(tpl ? tpl.apply(width, height) : {}),
+      ...(tpl ? placeText(tpl.apply(width, height)) : {}),
       content: sp.overlay_text,
       startFrame: start,
       durationInFrames: Math.min(secondsToFrames(2.6), available),

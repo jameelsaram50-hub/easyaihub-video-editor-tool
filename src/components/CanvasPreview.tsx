@@ -481,8 +481,9 @@ export const CanvasPreview: React.FC<CanvasPreviewProps> = ({
                 const displayScale = unscaledWidth / settings.width;
                 const isMedia = selectedClip.type === 'image' || selectedClip.type === 'video';
                 const clipScale = selectedClip.scale ?? 1;
-                const clipW = (selectedClip.width || settings.width) * displayScale * clipScale;
-                const clipH = (selectedClip.height || settings.height) * displayScale * clipScale;
+                // Full-frame media always matches the current composition size
+                const boxW = isMedia && selectedClip.fitToFrame ? settings.width : selectedClip.width || settings.width;
+                const boxH = isMedia && selectedClip.fitToFrame ? settings.height : selectedClip.height || settings.height;
 
                 return (
                   <div
@@ -498,8 +499,8 @@ export const CanvasPreview: React.FC<CanvasPreviewProps> = ({
                       boxShadow: '0 0 0 1px rgba(0,0,0,0.6), 0 0 10px rgba(56,189,248,0.3)',
                       pointerEvents: 'auto',
                       zIndex: 99,
-                      width: isMedia ? `${Math.max(60, (selectedClip.width || settings.width) * displayScale)}px` : undefined,
-                      height: isMedia ? `${Math.max(40, (selectedClip.height || settings.height) * displayScale)}px` : undefined,
+                      width: isMedia ? `${Math.max(60, boxW * displayScale)}px` : undefined,
+                      height: isMedia ? `${Math.max(40, boxH * displayScale)}px` : undefined,
                       minWidth: isMedia ? undefined : '100px',
                       minHeight: isMedia ? undefined : '44px',
                       padding: isMedia ? '0' : '6px 14px',

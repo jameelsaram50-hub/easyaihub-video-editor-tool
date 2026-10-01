@@ -1,7 +1,7 @@
 {
-  "name": "remotion-video-editor",
+  "name": "easyaihub-video-editor",
   "version": "1.0.0",
-  "description": "Desktop Remotion Video Editor with Electron & React",
+  "description": "Desktop Easy AI Hub Video Editor with Electron & React",
   "main": "electron/main.js",
   "scripts": {
     "dev:vite": "vite",
@@ -11,18 +11,19 @@
     "build:remotion": "node scripts/prepare-remotion.js",
     "build:electron": "electron-builder",
     "build": "npm run build:vite && npm run build:remotion && npm run build:electron",
+    "publish:r2": "node scripts/publish-to-r2.js",
     "typecheck": "tsc --noEmit -p ."
   },
   "keywords": [
-    "remotion",
+    "easyaihub",
     "video-editor",
     "electron",
     "react"
   ],
   "author": "",
   "build": {
-    "appId": "com.remotion.videoeditor",
-    "productName": "Remotion Video Editor Pro",
+    "appId": "com.easyaihub.videoeditor",
+    "productName": "Easy AI Hub Video Editor",
     "directories": {
       "output": "release"
     },
@@ -43,7 +44,8 @@
       }
     ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "public/icon.ico"
     }
   },
   "license": "ISC",
@@ -58,12 +60,14 @@
     "remotion": "^4.0.527"
   },
   "devDependencies": {
+    "@aws-sdk/client-s3": "^3.1142.0",
     "@types/node": "^26.6.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.1",
     "concurrently": "^10.0.5",
     "cross-env": "^10.1.0",
+    "dotenv": "^18.0.4",
     "electron": "^44.4.5",
     "electron-builder": "^26.15.3",
     "typescript": "^7.0.2",

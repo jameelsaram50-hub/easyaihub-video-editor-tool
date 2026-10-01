@@ -10,7 +10,10 @@ const aiEditor = require('./ai-editor');
 let mainWindow;
 
 function createWindow() {
+  const iconPath = path.join(__dirname, '../public/logo-icon.png');
   mainWindow = new BrowserWindow({
+    title: 'Easy AI Hub Video Editor',
+    icon: fs.existsSync(iconPath) ? iconPath : undefined,
     width: 1480,
     height: 940,
     minWidth: 1024,
@@ -216,7 +219,7 @@ ipcMain.handle('editor:shell:showItemInFolder', async (event, filePath) => {
 });
 
 // ---------------------------------------------------------------------------
-// Pipeline (Script Video Creator) jobs
+// Pipeline (Easy AI Hub) jobs
 // ---------------------------------------------------------------------------
 
 ipcMain.handle('editor:pipeline:listJobs', async () => {

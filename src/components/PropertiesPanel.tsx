@@ -187,7 +187,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                 type="number"
                 min={1}
                 max={120}
-                value={clip.inTransitionDuration ?? Math.round(getTransition(clip.inTransition).defaultSeconds * 30) ?? 15}
+                value={clip.inTransitionDuration ?? (Math.round(getTransition(clip.inTransition).defaultSeconds * 30) || 15)}
                 onChange={(e) => onUpdateClip({ inTransitionDuration: Math.max(1, Number(e.target.value)) })}
               />
             </div>
@@ -197,7 +197,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                 type="number"
                 min={1}
                 max={120}
-                value={clip.outTransitionDuration ?? Math.round(getTransition(clip.outTransition).defaultSeconds * 30) ?? 15}
+                value={clip.outTransitionDuration ?? (Math.round(getTransition(clip.outTransition).defaultSeconds * 30) || 15)}
                 onChange={(e) => onUpdateClip({ outTransitionDuration: Math.max(1, Number(e.target.value)) })}
               />
             </div>

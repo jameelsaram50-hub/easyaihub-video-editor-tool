@@ -61,27 +61,42 @@ function handleRequest(req, res) {
     let contentType = MIME_TYPES[path.extname(filePath).toLowerCase()] || 'application/octet-stream';
     // Some pipeline placeholders are SVG documents saved with a .png name
     if (contentType.startsWith('image/') && stat.size < 5 * 1024 * 1024) {
-      const head = Buffer.alloc(64);
-      const fd = fs.openSync(filePath, 'r');
-      fs.readSync(fd, head, 0, 64, 0);
-      fs.closeSync(fd);
-      const start = head.toString('utf8').trimStart();
-      if (start.startsWith('<svg') || start.startsWith('<?xml')) {
-        contentType = 'image/svg+xml';
+      try {
+        const head = Buffer.alloc(64);
+        const fd = fs.openSync(filePath, 'r');
+        try {
+          fs.readSync(fd, head, 0, 64, 0);
+        } finally {
+          fs.closeSync(fd);
+        }
+        const start = head.toString('utf8').trimStart();
+        if (start.startsWith('<svg') || start.startsWith('<?xml')) {
+          contentType = 'image/svg+xml';
+        }
+      } catch {
+        // Unreadable file: the stream below reports the error
       }
     }
+
+    // A read error must end this response, not crash the main process
+    const sendFile = (options) => {
+      const stream = fs.createReadStream(filePath, options);
+      stream.on('error', () => res.destroy());
+      stream.pipe(res);
+    };
     const range = req.headers.range;
 
     if (range) {
       const match = /bytes=(\d*)-(\d*)/.exec(range);
       let start = match && match[1] ? parseInt(match[1], 10) : 0;
-      let end = match && match[2] ? parseInt(match[2], 10) : stat.size - 1;
+      // Clients may ask past the end of the file; serve up to the last byte
+      let end = match && match[2] ? Math.min(parseInt(match[2], 10), stat.size - 1) : stat.size - 1;
       if (match && !match[1] && match[2]) {
         // Suffix range: last N bytes
         start = Math.max(0, stat.size - parseInt(match[2], 10));
         end = stat.size - 1;
       }
-      if (start >= stat.size || end >= stat.size || start > end) {
+      if (start >= stat.size || start > end) {
         res.writeHead(416, { 'Content-Range': `bytes */${stat.size}` }).end();
         return;
       }
@@ -91,13 +106,13 @@ function handleRequest(req, res) {
         'Content-Range': `bytes ${start}-${end}/${stat.size}`,
       });
       if (req.method === 'HEAD') return res.end();
-      fs.createReadStream(filePath, { start, end }).pipe(res);
+      sendFile({ start, end });
       return;
     }
 
     res.writeHead(200, { 'Content-Type': contentType, 'Content-Length': stat.size });
     if (req.method === 'HEAD') return res.end();
-    fs.createReadStream(filePath).pipe(res);
+    sendFile();
   });
 }
 

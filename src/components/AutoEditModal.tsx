@@ -131,7 +131,7 @@ export const AutoEditModal: React.FC<AutoEditModalProps> = ({ onClose, onApply, 
       }
 
       if (useAi && hasKey) {
-        log('ChatGPT is planning the edit (motion, transitions, SFX, highlights)...');
+        log('Smart AI is planning the edit (motion, transitions, sound effects)...');
         const ai = await api.ai.planEdit(buildAiRequest(job, style));
         if (!ai.success) {
           setPendingJob({ job, voiceFrames });
@@ -195,7 +195,7 @@ export const AutoEditModal: React.FC<AutoEditModalProps> = ({ onClose, onApply, 
               {/* 1. Content */}
               <section>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <span className="section-label">1. Content from the pipeline</span>
+                  <span className="section-label">1. Choose Video Project</span>
                   <div style={{ display: 'flex', gap: 6 }}>
                     <button className="btn-secondary" style={{ padding: '4px 10px', fontSize: 11 }} onClick={refreshJobs}>
                       <RefreshCw size={12} /> Refresh
@@ -208,12 +208,11 @@ export const AutoEditModal: React.FC<AutoEditModalProps> = ({ onClose, onApply, 
 
                 {loadingJobs ? (
                   <div className="lib-hint">
-                    <Loader2 size={12} className="spin" /> Looking for pipeline jobs...
+                    <Loader2 size={12} className="spin" /> Loading video projects...
                   </div>
                 ) : jobs.length === 0 && !customDir ? (
                   <div className="notice">
-                    No pipeline jobs found in {jobsDir || 'the pipeline folder'}. Run the Script Video Creator pipeline
-                    first, or use "Browse folder" to pick a job folder.
+                    No video projects found yet. Create a video first or use "Browse folder".
                   </div>
                 ) : (
                   <div
@@ -241,7 +240,7 @@ export const AutoEditModal: React.FC<AutoEditModalProps> = ({ onClose, onApply, 
                         className={`choice-card ${selectedDir === job.jobDir ? 'selected' : ''}`}
                         disabled={!job.ready}
                         onClick={() => setSelectedDir(job.jobDir)}
-                        title={job.ready ? job.title : 'This job has not finished the pipeline yet'}
+                        title={job.ready ? job.title : 'This video is still generating'}
                         style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}
                       >
                         <div
@@ -333,7 +332,7 @@ export const AutoEditModal: React.FC<AutoEditModalProps> = ({ onClose, onApply, 
                         type="text"
                         value={introTitle}
                         onChange={(e) => setIntroTitle(e.target.value)}
-                        placeholder={useAi && hasKey ? 'Empty = ChatGPT writes it' : 'Empty = no intro title'}
+                        placeholder={useAi && hasKey ? 'Empty = AI writes it' : 'Empty = no intro title'}
                         style={{ width: 230 }}
                       />
                     </label>
@@ -375,13 +374,13 @@ export const AutoEditModal: React.FC<AutoEditModalProps> = ({ onClose, onApply, 
                       style={{ width: 'auto', marginTop: 2 }}
                     />
                     <span>
-                      Let ChatGPT edit: it reads the script and picks motion, transitions, sound effects, highlight words and
+                      Smart AI Edit: Automatically picks scene motion, transitions, sound effects, and
                       on-screen text for every scene.
                     </span>
                   </label>
                   {!hasKey && (
                     <button className="btn-secondary" style={{ alignSelf: 'flex-start', padding: '5px 10px', fontSize: 11 }} onClick={onOpenSettings}>
-                      <Settings2 size={12} /> Add OpenAI API key
+                      <Settings2 size={12} /> Add AI Key
                     </button>
                   )}
                   <div className="lib-hint">Without AI the style rules are used — still a complete edit.</div>
@@ -423,7 +422,7 @@ export const AutoEditModal: React.FC<AutoEditModalProps> = ({ onClose, onApply, 
 
               {phase === 'ai-failed' && (
                 <div className="notice error">
-                  ChatGPT could not plan the edit: {error}
+                  The smart editor could not plan the edit: {error}
                   <br />
                   You can continue with the style rules instead.
                 </div>
@@ -433,7 +432,7 @@ export const AutoEditModal: React.FC<AutoEditModalProps> = ({ onClose, onApply, 
                 <div className="notice success">
                   Video ready in the editor: {result.summary.scenes} scenes, {result.summary.captions} captions,{' '}
                   {result.summary.sfx} sound effects, {result.summary.overlays} on-screen texts
-                  {result.summary.aiUsed ? ' (edited by ChatGPT)' : ' (style rules)'} —{' '}
+                  {result.summary.aiUsed ? ' (smart edit)' : ' (style rules)'} —{' '}
                   {(result.settings.durationInFrames / result.settings.fps).toFixed(1)}s.
                   {result.summary.missingMedia > 0 && ` ${result.summary.missingMedia} scenes have no image.`}
                   <br />

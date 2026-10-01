@@ -80,8 +80,8 @@ export const Header: React.FC<HeaderProps> = ({
         >
           <Sparkles size={18} color="#818cf8" />
           <span style={{ fontWeight: 800, fontSize: '14px', letterSpacing: '-0.3px' }}>
-            <span style={{ color: '#fff' }}>Remotion</span>
-            <span style={{ color: '#818cf8', marginLeft: '4px' }}>Studio Pro</span>
+            <span style={{ color: '#fff' }}>Easy AI Hub</span>
+            <span style={{ color: '#818cf8', marginLeft: '4px' }}>Video Editor</span>
           </span>
         </div>
 
@@ -239,7 +239,7 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Project Actions & Export */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <button className="btn-icon" onClick={onOpenSettings} title="AI Settings (OpenAI API key)">
+        <button className="btn-icon" onClick={onOpenSettings} title="AI Settings">
           <Settings2 size={16} />
         </button>
         <button

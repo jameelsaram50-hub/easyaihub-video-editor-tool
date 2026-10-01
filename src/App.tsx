@@ -283,9 +283,13 @@ export const App: React.FC = () => {
     const firstDuration = splitFrame - clip.startFrame;
     const secondDuration = clip.durationInFrames - firstDuration;
 
+    // The cut itself should be seamless: the first half keeps only its entrance,
+    // the second half only its exit
     const updatedFirst: TimelineClip = {
       ...clip,
       durationInFrames: firstDuration,
+      outTransition: 'none',
+      fadeOutFrames: 0,
     };
 
     const secondPart: TimelineClip = {
@@ -294,9 +298,25 @@ export const App: React.FC = () => {
       name: `${clip.name} (Part 2)`,
       startFrame: splitFrame,
       durationInFrames: secondDuration,
+      inTransition: 'none',
+      fadeInFrames: 0,
       // The second half continues the media where the first half stopped
       mediaStartFrame: (clip.mediaStartFrame ?? 0) + firstDuration,
     };
+
+    // Caption word timings are relative to the clip start, so divide them too
+    if (clip.words && clip.words.length > 0) {
+      updatedFirst.words = clip.words.filter((w) => w.startFrame < firstDuration);
+      secondPart.words = clip.words
+        .filter((w) => w.endFrame > firstDuration)
+        .map((w) => ({
+          ...w,
+          startFrame: Math.max(0, w.startFrame - firstDuration),
+          endFrame: w.endFrame - firstDuration,
+        }));
+      updatedFirst.content = updatedFirst.words.map((w) => w.word).join(' ');
+      secondPart.content = secondPart.words.map((w) => w.word).join(' ');
+    }
 
     pushHistory([
       ...clips.map((c) => (c.id === id ? updatedFirst : c)),
@@ -323,7 +343,9 @@ export const App: React.FC = () => {
       if (
         e.target instanceof HTMLInputElement ||
         e.target instanceof HTMLTextAreaElement ||
-        e.target instanceof HTMLSelectElement
+        e.target instanceof HTMLSelectElement ||
+        // Timeline shortcuts must not act on the project behind an open dialog
+        document.querySelector('.modal-backdrop')
       ) {
         return;
       }

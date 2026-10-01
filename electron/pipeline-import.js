@@ -2,8 +2,8 @@ const fs = require('fs');
 const path = require('path');
 
 /**
- * Reads jobs produced by the "Script Video Creator" pipeline app
- * (%APPDATA%/script-video-creator/jobs/<job_id>/). A finished job contains:
+ * Reads jobs produced by the "Easy AI Hub" pipeline app
+ * (%APPDATA%/easy-ai-hub/jobs/<job_id>/). A finished job contains:
  *   job.json          – step status + outputs
  *   final_table.json  – one row per scene: narration, timing, image file
  *   audio.mp3         – voiceover
@@ -14,8 +14,19 @@ const path = require('path');
 const VIDEO_EXTS = ['.mp4', '.webm', '.mov', '.m4v', '.mkv'];
 const IMAGE_EXTS = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg'];
 
+function getJobsDirs(appDataDir) {
+  const primary = path.join(appDataDir, 'easy-ai-hub', 'jobs');
+  const dirs = [primary];
+  const legacy = path.join(appDataDir, 'script-video-creator', 'jobs');
+  if (fs.existsSync(legacy) && legacy.toLowerCase() !== primary.toLowerCase()) {
+    dirs.push(legacy);
+  }
+  return dirs;
+}
+
 function getJobsDir(appDataDir) {
-  return path.join(appDataDir, 'script-video-creator', 'jobs');
+  const dirs = getJobsDirs(appDataDir);
+  return dirs.find((d) => fs.existsSync(d)) || dirs[0];
 }
 
 function readJson(file) {
@@ -95,36 +106,46 @@ function findSceneMedia(jobDir, job, row) {
 }
 
 function listJobs(appDataDir, getMediaUrl) {
-  const jobsDir = getJobsDir(appDataDir);
-  if (!fs.existsSync(jobsDir)) return { jobsDir, jobs: [] };
+  const primaryDir = getJobsDir(appDataDir);
+  const dirsToScan = getJobsDirs(appDataDir);
 
   const jobs = [];
-  for (const name of fs.readdirSync(jobsDir)) {
-    const jobDir = path.join(jobsDir, name);
-    const job = readJson(path.join(jobDir, 'job.json'));
-    if (!job) continue;
-    const rows = getRows(jobDir, job);
-    const audio = firstExisting([path.join(jobDir, 'audio.mp3'), job?.steps?.voiceover?.file]);
-    const firstMedia = rows.length > 0 ? findSceneMedia(jobDir, job, rows[0]) : null;
-    const lastRow = rows[rows.length - 1];
-    const mediaCount = rows.filter((r) => findSceneMedia(jobDir, job, r)).length;
-    jobs.push({
-      id: job.job_id || name,
-      jobDir,
-      title: getTitle(jobDir, job, rows),
-      templateId: job.template_id || null,
-      createdAt: job.created_at || null,
-      sceneCount: rows.length,
-      mediaCount,
-      durationSec: lastRow ? Number(lastRow.end_ms || 0) / 1000 : 0,
-      hasAudio: !!audio,
-      hasSrt: fs.existsSync(path.join(jobDir, 'subtitles.srt')),
-      ready: rows.length > 0,
-      thumbnailUrl: firstMedia && firstMedia.type === 'image' ? getMediaUrl(firstMedia.path) : null,
-    });
+  const seenIds = new Set();
+
+  for (const jobsDir of dirsToScan) {
+    if (!fs.existsSync(jobsDir)) continue;
+
+    for (const name of fs.readdirSync(jobsDir)) {
+      const jobDir = path.join(jobsDir, name);
+      const job = readJson(path.join(jobDir, 'job.json'));
+      if (!job) continue;
+      const jobId = job.job_id || name;
+      if (seenIds.has(jobId)) continue;
+      seenIds.add(jobId);
+
+      const rows = getRows(jobDir, job);
+      const audio = firstExisting([path.join(jobDir, 'audio.mp3'), job?.steps?.voiceover?.file]);
+      const firstMedia = rows.length > 0 ? findSceneMedia(jobDir, job, rows[0]) : null;
+      const lastRow = rows[rows.length - 1];
+      const mediaCount = rows.filter((r) => findSceneMedia(jobDir, job, r)).length;
+      jobs.push({
+        id: jobId,
+        jobDir,
+        title: getTitle(jobDir, job, rows),
+        templateId: job.template_id || null,
+        createdAt: job.created_at || null,
+        sceneCount: rows.length,
+        mediaCount,
+        durationSec: lastRow ? Number(lastRow.end_ms || 0) / 1000 : 0,
+        hasAudio: !!audio,
+        hasSrt: fs.existsSync(path.join(jobDir, 'subtitles.srt')),
+        ready: rows.length > 0,
+        thumbnailUrl: firstMedia && firstMedia.type === 'image' && typeof getMediaUrl === 'function' ? getMediaUrl(firstMedia.path) : null,
+      });
+    }
   }
   jobs.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
-  return { jobsDir, jobs };
+  return { jobsDir: primaryDir, jobs };
 }
 
 function loadJob(jobDir, getMediaUrl) {
@@ -146,7 +167,7 @@ function loadJob(jobDir, getMediaUrl) {
       startSec,
       endSec: Math.max(startSec + 0.2, endSec),
       mediaPath: media ? media.path : null,
-      mediaUrl: media ? getMediaUrl(media.path) : null,
+      mediaUrl: media && typeof getMediaUrl === 'function' ? getMediaUrl(media.path) : null,
       mediaType: media ? media.type : null,
     };
   });
@@ -168,7 +189,7 @@ function loadJob(jobDir, getMediaUrl) {
     title: getTitle(jobDir, job, rows),
     templateId: job?.template_id || null,
     scenes,
-    voiceover: audioPath ? { path: audioPath, url: getMediaUrl(audioPath) } : null,
+    voiceover: audioPath ? { path: audioPath, url: typeof getMediaUrl === 'function' ? getMediaUrl(audioPath) : null } : null,
     srtCues,
   };
 }

@@ -126,14 +126,14 @@ async function openaiFetch(apiKey, pathName, body) {
     }
     if (!res.ok) {
       const message = json?.error?.message || text.slice(0, 300) || res.statusText;
-      if (res.status === 401) throw new Error(`OpenAI API key is invalid (401). ${message}`);
-      if (res.status === 429) throw new Error(`OpenAI rate limit or quota exceeded (429). ${message}`);
-      if (res.status === 404) throw new Error(`OpenAI model not found (404). Check the model name in Settings. ${message}`);
-      throw new Error(`OpenAI error ${res.status}: ${message}`);
+      if (res.status === 401) throw new Error(`AI API key is invalid (401). ${message}`);
+      if (res.status === 429) throw new Error(`AI rate limit or balance reached (429). ${message}`);
+      if (res.status === 404) throw new Error(`AI model not found (404). Check the model name in Settings. ${message}`);
+      throw new Error(`AI error ${res.status}: ${message}`);
     }
     return json;
   } catch (err) {
-    if (err.name === 'AbortError') throw new Error('OpenAI request timed out.');
+    if (err.name === 'AbortError') throw new Error('AI request timed out.');
     throw err;
   } finally {
     clearTimeout(timer);
@@ -141,7 +141,7 @@ async function openaiFetch(apiKey, pathName, body) {
 }
 
 async function testConnection(apiKey, model) {
-  if (!apiKey) throw new Error('No OpenAI API key saved.');
+  if (!apiKey) throw new Error('No AI API key saved.');
   await openaiFetch(apiKey, `/models/${encodeURIComponent(model)}`);
   return true;
 }
@@ -150,7 +150,7 @@ async function testConnection(apiKey, model) {
  * @param {object} request { style, scenes: [{index, text, visual, seconds}], title, options, sfxHints }
  */
 async function planEdit(apiKey, model, request) {
-  if (!apiKey) throw new Error('No OpenAI API key saved. Add it in Settings.');
+  if (!apiKey) throw new Error('No AI API key saved. Add it in Settings.');
   const schema = buildSchema(request.options);
   const json = await openaiFetch(apiKey, '/chat/completions', {
     model,
@@ -164,11 +164,11 @@ async function planEdit(apiKey, model, request) {
   const choice = json?.choices?.[0];
   if (choice?.message?.refusal) throw new Error(`The model refused: ${choice.message.refusal}`);
   const content = choice?.message?.content;
-  if (!content) throw new Error('OpenAI returned an empty answer.');
+  if (!content) throw new Error('AI returned an empty response.');
   try {
     return { plan: JSON.parse(content), usage: json.usage || null, model: json.model || model };
   } catch {
-    throw new Error('OpenAI returned an answer that is not valid JSON.');
+    throw new Error('AI returned an invalid response.');
   }
 }
 

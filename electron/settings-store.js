@@ -1,6 +1,14 @@
 const fs = require('fs');
 const path = require('path');
-const { app, safeStorage } = require('electron');
+const os = require('os');
+
+let app = null;
+let safeStorage = null;
+try {
+  const electron = require('electron');
+  app = electron.app || null;
+  safeStorage = electron.safeStorage || null;
+} catch (e) {}
 
 /**
  * Editor settings in <userData>/editor-settings.json.
@@ -8,9 +16,27 @@ const { app, safeStorage } = require('electron');
  * sent to the renderer – the renderer only learns whether a key is set.
  */
 
-const DEFAULT_MODEL = 'gpt-4.1-mini';
+const DEFAULT_MODEL = 'gpt-4o-mini';
 
-const settingsFile = () => path.join(app.getPath('userData'), 'editor-settings.json');
+const getUserDataDir = () => {
+  if (app && typeof app.getPath === 'function') {
+    try {
+      return app.getPath('userData');
+    } catch (e) {}
+  }
+  const roaming = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
+  return path.join(roaming, 'easyaihub-video-editor');
+};
+
+const settingsFile = () => path.join(getUserDataDir(), 'editor-settings.json');
+
+function isEncryptionAvailable() {
+  try {
+    return Boolean(safeStorage && typeof safeStorage.isEncryptionAvailable === 'function' && safeStorage.isEncryptionAvailable());
+  } catch {
+    return false;
+  }
+}
 
 function readRaw() {
   try {
@@ -21,15 +47,19 @@ function readRaw() {
 }
 
 function writeRaw(data) {
-  fs.mkdirSync(path.dirname(settingsFile()), { recursive: true });
-  fs.writeFileSync(settingsFile(), JSON.stringify(data, null, 2), 'utf8');
+  try {
+    fs.mkdirSync(path.dirname(settingsFile()), { recursive: true });
+    fs.writeFileSync(settingsFile(), JSON.stringify(data, null, 2), 'utf8');
+  } catch (e) {
+    console.warn('[SettingsStore] Failed to write settings:', e.message);
+  }
 }
 
 function getOpenAIKey() {
   const raw = readRaw();
   if (!raw.openaiKey) return null;
   try {
-    if (raw.openaiKeyEncrypted && safeStorage.isEncryptionAvailable()) {
+    if (raw.openaiKeyEncrypted && isEncryptionAvailable()) {
       return safeStorage.decryptString(Buffer.from(raw.openaiKey, 'base64'));
     }
     return raw.openaiKeyEncrypted ? null : raw.openaiKey;
@@ -43,7 +73,7 @@ function getPublicSettings() {
   return {
     hasOpenAIKey: !!getOpenAIKey(),
     openaiModel: raw.openaiModel || DEFAULT_MODEL,
-    encryptionAvailable: safeStorage.isEncryptionAvailable(),
+    encryptionAvailable: isEncryptionAvailable(),
   };
 }
 
@@ -54,7 +84,7 @@ function updateSettings({ openaiKey, openaiModel } = {}) {
     if (!key) {
       delete raw.openaiKey;
       delete raw.openaiKeyEncrypted;
-    } else if (safeStorage.isEncryptionAvailable()) {
+    } else if (isEncryptionAvailable()) {
       raw.openaiKey = safeStorage.encryptString(key).toString('base64');
       raw.openaiKeyEncrypted = true;
     } else {
